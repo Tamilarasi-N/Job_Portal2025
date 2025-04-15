@@ -10,5 +10,5 @@ python-dotenv>=0.19
 itsdangerous>=2.0
 psycopg2-binary # For PostgreSQL on Render
 gunicorn        # WSGI server for Render
-whitenoise[brotli] # For serving static files with Gunicorn
 uuid            # Built-in, but good to note dependency if explicit import used
+cloudinary
