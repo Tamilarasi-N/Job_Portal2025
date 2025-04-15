@@ -11,4 +11,5 @@ itsdangerous>=2.0
 psycopg2-binary # For PostgreSQL on Render
 gunicorn        # WSGI server for Render
 uuid            # Built-in, but good to note dependency if explicit import used
+whitenoise[brotli]
 cloudinary
