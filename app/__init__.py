@@ -1,3 +1,4 @@
+
 # --- app/__init__.py ---
 
 import os
@@ -9,10 +10,8 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from itsdangerous import URLSafeTimedSerializer
 from datetime import datetime
-# --- V V V --- Cloudinary Imports --- V V V ---
 import cloudinary
 import cloudinary.utils
-# --- ^ ^ ^ --- End Cloudinary Imports --- ^ ^ ^ ---
 
 # Initialize extensions
 db = SQLAlchemy()
@@ -25,15 +24,24 @@ log_formatter = logging.Formatter('%(asctime)s %(levelname)s: %(message)s [in %(
 
 def create_app(config_class=None):
     """ Create and configure the Flask application. """
-    app = Flask(__name__, instance_relative_config=True) # Keep instance folder for db maybe
+    app = Flask(__name__, instance_relative_config=True)
 
-    # Load Configuration (Remove UPLOAD_FOLDER)
+    # --- V V V --- REMOVED Upload Folder Path Logic --- V V V ---
+    # default_upload_folder = os.path.join(app.instance_path, 'uploads', 'resumes')
+    # upload_folder_path = os.environ.get('UPLOAD_FOLDER', default_upload_folder)
+    # --- ^ ^ ^ --- End Removal --- ^ ^ ^ ---
+
+    # Load Configuration
     app.config.from_mapping(
         SECRET_KEY=os.environ.get('SECRET_KEY', 'change_this_dev_secret_key'),
         SECURITY_PASSWORD_SALT=os.environ.get('SECURITY_PASSWORD_SALT', 'change_this_dev_salt'),
         SQLALCHEMY_DATABASE_URI=os.environ.get('DATABASE_URL', f"sqlite:///{os.path.join(app.instance_path, 'site.db')}"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
-        MAX_CONTENT_LENGTH = 5 * 1024 * 1024, # Keep general upload limit
+        # --- V V V --- REMOVED UPLOAD_FOLDER from Config --- V V V ---
+        # UPLOAD_FOLDER = upload_folder_path,
+        # --- ^ ^ ^ --- End Removal --- ^ ^ ^ ---
+        MAX_CONTENT_LENGTH = 5 * 1024 * 1024, # Keep general request size limit
+        # --- Mail Config ---
         MAIL_SERVER=os.environ.get('MAIL_SERVER', 'smtp.example.com'),
         MAIL_PORT=int(os.environ.get('MAIL_PORT', 587)),
         MAIL_USE_TLS=os.environ.get('MAIL_USE_TLS', 'True').lower() in ['true', '1', 't'],
@@ -43,32 +51,31 @@ def create_app(config_class=None):
         MAIL_DEFAULT_SENDER=os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@example.com'),
     )
 
-    # Ensure instance folder exists (for SQLite DB if used locally)
+    # Ensure Instance Folder Exists (for local DB)
     try: os.makedirs(app.instance_path, exist_ok=True)
     except OSError as e: app.logger.error(f"Error creating instance dir {app.instance_path}: {e}")
 
-    # --- V V V --- Configure Cloudinary SDK --- V V V ---
+    # --- V V V --- REMOVED os.makedirs check for UPLOAD_FOLDER --- V V V ---
+    # No longer needed as we don't save locally
+    # --- ^ ^ ^ --- End Removal --- ^ ^ ^ ---
+
+    # Configure Cloudinary SDK
     try:
         cloudinary.config(
             cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME'),
             api_key = os.environ.get('CLOUDINARY_API_KEY'),
             api_secret = os.environ.get('CLOUDINARY_API_SECRET'),
-            secure=True # Use https URLs
+            secure=True
         )
-        if not all([cloudinary.config().cloud_name, cloudinary.config().api_key, cloudinary.config().api_secret]):
-             app.logger.warning("CLOUDINARY environment variables not fully configured. Uploads will fail.")
-        else:
-             app.logger.info("Cloudinary SDK configured.")
-    except Exception as e:
-        app.logger.error(f"Cloudinary configuration error: {e}")
-    # --- ^ ^ ^ --- End Cloudinary Config --- ^ ^ ^ ---
-
+        if not all([cloudinary.config().cloud_name, cloudinary.config().api_key, cloudinary.config().api_secret]): app.logger.warning("CLOUDINARY env vars not fully configured. Uploads will fail.")
+        else: app.logger.info("Cloudinary SDK configured.")
+    except Exception as e: app.logger.error(f"Cloudinary config error: {e}")
 
     # Initialize Flask Extensions
     try: db.init_app(app); login_manager.init_app(app); mail.init_app(app)
     except Exception as e: app.logger.error(f"Error initializing Flask extensions: {e}")
 
-    # Initialize Serializer
+    # Initialize Serializer & Check Keys/Salts
     global serializer
     if not app.config.get('SECRET_KEY') or app.config['SECRET_KEY'] == 'change_this_dev_secret_key': app.logger.warning("Insecure SECRET_KEY.")
     if not app.config.get('SECURITY_PASSWORD_SALT') or app.config['SECURITY_PASSWORD_SALT'] == 'change_this_dev_salt': app.logger.warning("Insecure SALT.")
@@ -83,31 +90,18 @@ def create_app(config_class=None):
         except ValueError: current_app.logger.error(f"Invalid user_id format: {user_id}"); return None
         except Exception as e: current_app.logger.error(f"Error loading user {user_id}: {e}"); return None
 
-    # --- Context Processors ---
+    # Context Processors
     @app.context_processor
     def inject_now(): return {'now': datetime.utcnow}
-
-    # --- V V V --- Add Cloudinary URL Helper --- V V V ---
     @app.context_processor
     def utility_processor():
-        def get_cloudinary_raw_url(public_id):
-            # Generates a URL for non-image files stored on Cloudinary
+        def get_cloudinary_raw_url(public_id): # Cloudinary URL helper
             if not public_id: return None
             try:
-                # Ensure Cloudinary is configured before trying to generate URL
-                if cloudinary.config().cloud_name:
-                    # resource_type='raw' for non-image/video files like PDFs
-                    # secure=True ensures HTTPS
-                    url_tuple = cloudinary.utils.cloudinary_url(public_id, resource_type="raw", secure=True)
-                    return url_tuple[0] if url_tuple else None # cloudinary_url returns a tuple (url, options)
-                else:
-                    current_app.logger.warning("Cloudinary not configured, cannot generate URL.")
-                    return None
-            except Exception as e:
-                current_app.logger.error(f"Error generating Cloudinary URL for {public_id}: {e}")
-                return None
+                if cloudinary.config().cloud_name: url_tuple = cloudinary.utils.cloudinary_url(public_id, resource_type="raw", secure=True); return url_tuple[0] if url_tuple else None
+                else: current_app.logger.warning("Cloudinary not configured."); return None
+            except Exception as e: current_app.logger.error(f"Error generating Cloudinary URL for {public_id}: {e}"); return None
         return dict(get_cloudinary_raw_url=get_cloudinary_raw_url)
-    # --- ^ ^ ^ --- End Cloudinary URL Helper --- ^ ^ ^ ---
 
     # Register Blueprints
     try:
