@@ -4,9 +4,11 @@ Flask-SQLAlchemy>=2.5
 Flask-WTF>=1.0
 Flask-Login>=0.5
 Flask-Mail>=0.9
-Werkzeug>=2.0  # Provides password hashing
-email-validator>=1.1 # Required by Flask-WTF's Email validator
-python-dotenv>=0.19 # To load environment variables from .env file
-itsdangerous>=2.0 # For generating secure tokens
-psycopg2-binary
-gunicorn
+Werkzeug>=2.0
+email-validator>=1.1
+python-dotenv>=0.19
+itsdangerous>=2.0
+psycopg2-binary # For PostgreSQL on Render
+gunicorn        # WSGI server for Render
+whitenoise[brotli] # For serving static files with Gunicorn
+uuid            # Built-in, but good to note dependency if explicit import used
