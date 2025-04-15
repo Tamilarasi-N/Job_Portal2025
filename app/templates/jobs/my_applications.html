@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<h2>{{ title }}</h2>
+
+{% if applications and applications.items %}
+<p>You have submitted {{ applications.total }} application(s).</p>
+<div class="table-responsive">
+    <table class="table table-striped table-hover align-middle">
+        <thead>
+            <tr>
+                <th scope="col">Job Title</th>
+                <th scope="col">Company</th>
+                <th scope="col">Applied Date</th>
+                <th scope="col">Status</th>
+                {# --- V V V --- ADDED HEADERS --- V V V --- #}
+                <th scope="col">Response Date</th>
+                <th scope="col">Feedback/Reason</th>
+                {# --- ^ ^ ^ --- END HEADERS --- ^ ^ ^ --- #}
+            </tr>
+        </thead>
+        <tbody>
+            {% for app_obj in applications.items %}
+            <tr>
+                {# Job Title Link #}
+                <td>
+                    {% if app_obj.job %}
+                        <a href="{{ url_for('jobs.job_detail', job_id=app_obj.job.id) }}">{{ app_obj.job.title }}</a>
+                    {% else %}
+                        Job details unavailable
+                    {% endif %}
+                </td>
+                {# Company #}
+                <td>{{ app_obj.job.company_name if app_obj.job else '-' }}</td>
+                {# Applied Date #}
+                <td>{{ app_obj.applied_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                {# Status Badge #}
+                <td>
+                   {% if app_obj.status == 'Submitted' %}
+                       <span class="badge bg-primary">Submitted</span>
+                   {% elif app_obj.status == 'Rejected' %}
+                       {# Tooltip removed as reason is now separate #}
+                       <span class="badge bg-danger">Rejected</span>
+                   {% elif app_obj.status == 'Accepted' %}
+                       <span class="badge bg-success">Accepted</span>
+                   {% elif app_obj.status == 'Viewed' %}
+                        <span class="badge bg-info text-dark">Viewed</span>
+                   {% else %}
+                        <span class="badge bg-secondary">{{ app_obj.status }}</span>
+                   {% endif %}
+                </td>
+                {# --- V V V --- ADDED DATA CELLS --- V V V --- #}
+                {# Response Date #}
+                <td>
+                    {# Show update date only if status is not 'Submitted' #}
+                    {% if app_obj.status != 'Submitted' and app_obj.status_updated_at %}
+                        {{ app_obj.status_updated_at.strftime('%Y-%m-%d') }} {# Show only date for brevity #}
+                    {% else %}
+                        <span class="text-muted">-</span>
+                    {% endif %}
+                </td>
+                {# Feedback/Reason #}
+                <td>
+                    {% if app_obj.status == 'Rejected' and app_obj.rejection_reason %}
+                        <small class="text-muted" style="font-size: 0.9em;">{{ app_obj.rejection_reason }}</small>
+                    {% else %}
+                         <span class="text-muted">-</span>
+                    {% endif %}
+                 </td>
+                 {# --- ^ ^ ^ --- END DATA CELLS --- ^ ^ ^ --- #}
+            </tr>
+            {% endfor %} {# End loop #}
+        </tbody>
+    </table>
+</div>
+
+<nav aria-label="My application pages" class="mt-4">
+ <ul class="pagination justify-content-center">
+    {% if applications.has_prev %}<li class="page-item"><a class="page-link" href="{{ url_for('jobs.my_applications', page=applications.prev_num) }}">Previous</a></li>{% else %}<li class="page-item disabled"><span class="page-link">Previous</span></li>{% endif %}
+    {% for page_num in applications.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}{% if page_num %}{% if applications.page == page_num %}<li class="page-item active"><span class="page-link">{{ page_num }}</span></li>{% else %}<li class="page-item"><a class="page-link" href="{{ url_for('jobs.my_applications', page=page_num) }}">{{ page_num }}</a></li>{% endif %}{% else %}<li class="page-item disabled"><span class="page-link">...</span></li>{% endif %}{% endfor %}
+    {% if applications.has_next %}<li class="page-item"><a class="page-link" href="{{ url_for('jobs.my_applications', page=applications.next_num) }}">Next</a></li>{% else %}<li class="page-item disabled"><span class="page-link">Next</span></li>{% endif %}
+ </ul>
+</nav>
+
+{% else %} {# If no applications #}
+<div class="alert alert-info mt-3" role="alert">
+    You haven't applied for any jobs yet. <a href="{{ url_for('jobs.job_list') }}" class="alert-link">Find jobs now!</a>
+</div>
+{% endif %} {# End check for applications.items #}
+
+{% endblock %} {# End block content #}
+
+
+{# Tooltip script can be removed or kept if used elsewhere #}
+{#
+{% block scripts %}
+{{ super() }}
+<script>
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+</script>
+{% endblock %}
+#}
+
+{# --- End of jobs/my_applications.html --- #}

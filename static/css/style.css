@@ -1,0 +1,59 @@
+/* --- static/css/style.css --- */
+
+body {
+    padding-bottom: 60px; /* Add padding to the bottom to prevent footer overlap */
+    background-color: #f8f9fa; /* Light background */
+}
+
+/* Add space below the fixed navbar */
+.container {
+    padding-top: 1rem;
+}
+
+/* Footer basic styling */
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    line-height: 60px; /* Vertically center footer text */
+    background-color: #e9ecef;
+}
+
+/* Style for cards used in dashboards/listings */
+.card {
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Ensure pagination links are clickable */
+.pagination .page-link {
+    cursor: pointer;
+}
+.pagination .disabled .page-link {
+    cursor: default;
+}
+
+/* Make badges slightly larger/easier to read */
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.6em;
+}
+
+/* Specific styling for job detail description */
+.card-body p[style*="white-space: pre-wrap"] {
+    font-family: inherit; /* Use the body font */
+    line-height: 1.6;
+}
+
+/* Add some spacing for form elements */
+.form-label {
+    font-weight: 500;
+}
+
+/* Small icons for admin actions */
+.btn-xs {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.75rem;
+    line-height: 1;
+    border-radius: 0.2rem;
+}

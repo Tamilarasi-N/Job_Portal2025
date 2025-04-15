@@ -1,0 +1,30 @@
+# Environment variables - DO NOT COMMIT SECRETS!
+.env
+
+# Virtual environment
+venv/
+*/venv/
+.venv/
+*/.venv/
+ENV/
+*/ENV/
+
+# Python cache/compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Instance folder (contains DB, uploads) - DO NOT COMMIT!
+# The setup instructions will explain how these are created.
+instance/
+
+# Log files
+*.log
+logs/
+
+# Editor/OS files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db

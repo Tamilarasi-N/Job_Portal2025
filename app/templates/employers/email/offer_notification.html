@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Congratulations Regarding {{ job.title }}</title>
+     <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8f9fa; }
+        .container { max-width: 600px; margin: 20px auto; padding: 25px; background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 5px; }
+        h2 { color: #198754; } /* Success color */
+        p { margin-bottom: 1em; }
+        strong { color: #212529; }
+        .footer { font-size: 0.9em; color: #6c757d; margin-top: 20px; text-align: center; }
+     </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Congratulations, {{ applicant.username }}!</h2>
+
+        <p>We are pleased to inform you that following your application for the <strong>{{ job.title }}</strong> position at <strong>{{ job.company_name }}</strong>, we would like to extend an offer of employment.</p>
+
+        <p>This is an exciting step, and a member of our hiring team will be in contact with you directly very soon via email or phone with the official offer details, including compensation, benefits, start date, and any next steps required from your side.</p>
+
+        <p>In the meantime, if you have any immediate questions, please feel free to reach out to the contact person mentioned during your interview process (if applicable).</p>
+
+        <p>We look forward to potentially welcoming you to the team!</p>
+
+        <p>Sincerely,<br>
+           The Hiring Team at {{ job.company_name }}<br>
+           (via Job Portal)
+        </p>
+
+        <div class="footer">
+            This is an automated notification regarding your application status. Official offer details will follow separately.
+        </div>
+    </div>
+</body>
+</html>

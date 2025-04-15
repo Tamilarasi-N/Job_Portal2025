@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Job Posting Has Been Approved</title>
+    <style> body { font-family: sans-serif; line-height: 1.6; } </style>
+</head>
+<body>
+    <h2>Job Posting Approved!</h2>
+    <p>Hello {{ employer.username }},</p>
+    <p>Good news! Your job posting "<strong>{{ job.title }}</strong>" for {{ job.company_name }} has been approved by the administrator and is now live on the Job Portal.</p>
+    <ul>
+        <li><strong>Job Title:</strong> {{ job.title }}</li>
+        <li><strong>Company:</strong> {{ job.company_name }}</li>
+        <li><strong>Location:</strong> {{ job.location }}</li>
+    </ul>
+    <p>You can view the live job posting here:<br>
+    <a href="{{ job_url }}">{{ job_url }}</a></p>
+    <p>You can manage this posting and view applications from your dashboard:<br>
+    <a href="{{ dashboard_url }}">{{ dashboard_url }}</a></p>
+    <p>Best regards,<br>The Job Portal Team</p>
+</body>
+</html>

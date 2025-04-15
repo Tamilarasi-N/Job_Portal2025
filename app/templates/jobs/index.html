@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Find Jobs{% endblock %}
+
+{% block content %}
+<h2>Find Your Next Job</h2>
+
+<form method="GET" action="{{ url_for('jobs.job_list') }}" class="row g-3 mb-4 align-items-end bg-light p-3 rounded">
+    <div class="col-md-4">
+        <label for="q" class="form-label">Keywords (Title, Description, Company)</label>
+        <input type="text" class="form-control" id="q" name="q" value="{{ query or '' }}" placeholder="e.g., Python Developer">
+    </div>
+    <div class="col-md-3">
+        <label for="location" class="form-label">Location</label>
+        <input type="text" class="form-control" id="location" name="location" value="{{ location or '' }}" placeholder="e.g., New York">
+    </div>
+     <div class="col-md-3">
+        <label for="category" class="form-label">Category</label>
+        <input type="text" class="form-control" id="category" name="category" value="{{ category or '' }}" placeholder="e.g., Engineering">
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Search</button>
+    </div>
+</form>
+
+{% if jobs and jobs.items %}
+    <p>Showing {{ jobs.items|length }} of {{ jobs.total }} jobs found.</p>
+    <div class="list-group">
+        {% for job in jobs.items %}
+        <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" class="list-group-item list-group-item-action flex-column align-items-start">
+            <div class="d-flex w-100 justify-content-between">
+                <h5 class="mb-1">{{ job.title }}</h5>
+                <small class="text-muted">{{ job.posted_at.strftime('%Y-%m-%d') }}</small>
+            </div>
+            <p class="mb-1"><strong>{{ job.company_name }}</strong> - {{ job.location }}</p>
+            <small class="text-muted">Category: {{ job.category or 'N/A' }}</small>
+             {% if job.salary %}
+                 <small class="text-muted d-block">Salary: {{ job.salary }}</small>
+             {% endif %}
+        </a>
+        {% endfor %}
+    </div>
+
+    <nav aria-label="Job search results pages" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if jobs.has_prev %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('jobs.job_list', page=jobs.prev_num, q=query, location=location, category=category) }}">Previous</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            {% endif %}
+
+            {% for page_num in jobs.iter_pages() %}
+                {% if page_num %}
+                    {% if jobs.page == page_num %}
+                        <li class="page-item active" aria-current="page"><span class="page-link">{{ page_num }}</span></li>
+                    {% else %}
+                        <li class="page-item"><a class="page-link" href="{{ url_for('jobs.job_list', page=page_num, q=query, location=location, category=category) }}">{{ page_num }}</a></li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if jobs.has_next %}
+                 <li class="page-item"><a class="page-link" href="{{ url_for('jobs.job_list', page=jobs.next_num, q=query, location=location, category=category) }}">Next</a></li>
+            {% else %}
+                 <li class="page-item disabled"><span class="page-link">Next</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+
+{% else %}
+<div class="alert alert-info" role="alert">
+    No jobs found matching your criteria. Try broadening your search.
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Application Received for {{ job.title }}</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; color: #333; }
+        a { color: #0d6efd; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+        strong { color: #212529;}
+        small { color: #6c757d; }
+    </style>
+</head>
+<body>
+    <h2>Application Submitted Successfully</h2>
+    <p>Hello {{ user.username }},</p>
+    <p>This email confirms that your application for the position of <strong>{{ job.title }}</strong> at <strong>{{ job.company_name }}</strong> has been successfully submitted via the Job Portal.</p>
+    <p>Applied On: {{ now.strftime('%Y-%m-%d %H:%M') }} UTC</p> {# Assumes 'now' is passed from view #}
+    <p>The hiring team at {{ job.company_name }} will review your application. They will contact you directly if your profile is shortlisted for the next steps. You can track the status of your application on your dashboard (link below):</p>
+    <p><a href="{{ url_for('jobs.my_applications', _external=True) }}">View My Applications</a></p>
+    <p>You can view the original job posting again here:<br>
+    <a href="{{ job_url }}">{{ job_url }}</a></p>
+    <p>Thank you for using the Job Portal and best of luck!<br>
+    The Job Portal Team</p>
+    <hr>
+    <p><small>This is an automated message. Please do not reply directly to this email.</small></p>
+</body>
+</html>

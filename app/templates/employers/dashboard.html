@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Employer Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Your Job Postings</h2>
+    <a href="{{ url_for('employers.post_job') }}" class="btn btn-primary">Post New Job</a>
+</div>
+
+{% if jobs and jobs.items %}
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th scope="col">Title</th>
+                <th scope="col">Status</th>
+                <th scope="col">Posted</th>
+                <th scope="col">Applications</th>
+                <th scope="col">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for job in jobs.items %}
+            <tr>
+                <td>{{ job.title }}</td>
+                <td>
+                    {% if job.is_approved %}
+                        <span class="badge bg-success">Approved</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">Pending Approval</span>
+                    {% endif %}
+                </td>
+                <td>{{ job.posted_at.strftime('%Y-%m-%d') }}</td>
+                <td>
+                    <a href="{{ url_for('employers.view_applications', job_id=job.id) }}" class="btn btn-sm btn-info">
+                        View ({{ job.applications.count() }}) {# Efficiently count applications #}
+                    </a>
+                </td>
+                <td>
+                    <a href="{{ url_for('employers.edit_job', job_id=job.id) }}" class="btn btn-sm btn-secondary me-1">Edit</a>
+                    {# Delete button requires a form for security (POST request) #}
+                    <form action="{{ url_for('employers.delete_job', job_id=job.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this job posting?');">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token else '' }}"> {# Add CSRF token if using Flask-WTF forms #}
+                        <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<nav aria-label="Employer job pages" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if jobs.has_prev %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('employers.dashboard', page=jobs.prev_num) }}">Previous</a></li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+        {% for page_num in jobs.iter_pages() %}
+            {% if page_num %}
+                {% if jobs.page == page_num %}
+                    <li class="page-item active"><span class="page-link">{{ page_num }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="{{ url_for('employers.dashboard', page=page_num) }}">{{ page_num }}</a></li>
+                {% endif %}
+            {% else %}
+                 <li class="page-item disabled"><span class="page-link">...</span></li>
+            {% endif %}
+        {% endfor %}
+        {% if jobs.has_next %}
+            <li class="page-item"><a class="page-link" href="{{ url_for('employers.dashboard', page=jobs.next_num) }}">Next</a></li>
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+    </ul>
+</nav>
+
+{% else %}
+<div class="alert alert-info" role="alert">
+    You haven't posted any jobs yet. <a href="{{ url_for('employers.post_job') }}" class="alert-link">Post your first job now!</a>
+</div>
+{% endif %}
+
+{% endblock %}

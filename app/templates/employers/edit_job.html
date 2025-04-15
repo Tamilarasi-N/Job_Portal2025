@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Job: {{ job.title }}{% endblock %}
+
+{% block content %}
+<h2>Edit Job Listing</h2>
+<p>Update the details below. Note that editing a job will require it to be re-approved by an administrator.</p>
+
+<form method="POST" action="{{ url_for('employers.edit_job', job_id=job.id) }}" novalidate>
+    {{ form.hidden_tag() }} {# CSRF token #}
+
+    <div class="mb-3">
+        {{ form.title.label(class="form-label") }}
+        {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else "")) }}
+        {% if form.title.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.title.errors %}<span>{{ error }}</span>{% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows=8) }}
+        {% if form.description.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.description.errors %}<span>{{ error }}</span>{% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+             {{ form.location.label(class="form-label") }}
+             {{ form.location(class="form-control" + (" is-invalid" if form.location.errors else "")) }}
+             {% if form.location.errors %}
+                 <div class="invalid-feedback">
+                     {% for error in form.location.errors %}<span>{{ error }}</span>{% endfor %}
+                 </div>
+             {% endif %}
+        </div>
+         <div class="col-md-6 mb-3">
+             {{ form.category.label(class="form-label") }}
+             {{ form.category(class="form-control" + (" is-invalid" if form.category.errors else ""), placeholder="e.g., Software Development") }}
+             {% if form.category.errors %}
+                 <div class="invalid-feedback">
+                     {% for error in form.category.errors %}<span>{{ error }}</span>{% endfor %}
+                 </div>
+             {% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        {{ form.salary.label(class="form-label") }}
+        {{ form.salary(class="form-control" + (" is-invalid" if form.salary.errors else ""), placeholder="e.g., $50,000 - $60,000 per year") }}
+         <small class="form-text text-muted">Optional. Leave blank if not specified.</small>
+        {% if form.salary.errors %}
+            <div class="invalid-feedback">
+                {% for error in form.salary.errors %}<span>{{ error }}</span>{% endfor %}
+            </div>
+        {% endif %}
+    </div>
+
+     <div class="mb-3">
+        <label class="form-label">Company Name</label>
+        <input type="text" class="form-control" value="{{ job.company_name or 'N/A' }}" disabled readonly>
+    </div>
+
+
+    <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+         <a href="{{ url_for('employers.dashboard') }}" class="btn btn-secondary me-md-2">Cancel</a>
+         <button type="submit" class="btn btn-primary">Save Changes</button> {# Changed button text #}
+    </div>
+</form>
+{% endblock %}

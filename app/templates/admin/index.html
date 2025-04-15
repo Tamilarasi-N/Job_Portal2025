@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<h2>Administrator Dashboard</h2>
+<p>Welcome, {{ current_user.username }}. Manage the job portal from here.</p>
+
+<div class="row mt-4">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Manage Users</h5>
+                <p class="card-text">View, edit, or delete user accounts.</p>
+                <p class="display-6">{{ total_users_count }}</p>
+                <a href="{{ url_for('admin.manage_users') }}" class="btn btn-primary">Go to Users</a>
+            </div>
+        </div>
+    </div>
+     <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Manage Jobs</h5>
+                <p class="card-text">Approve, edit, or delete job postings.</p>
+                 <p class="display-6">{{ total_jobs_count }}</p>
+                <a href="{{ url_for('admin.manage_jobs') }}" class="btn btn-primary">Go to Jobs</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <h5 class="card-title">Pending Job Approvals</h5>
+                <p class="card-text">Jobs waiting for administrator review.</p>
+                 <p class="display-6">{{ pending_jobs_count }}</p>
+                <a href="{{ url_for('admin.manage_jobs', status='pending') }}" class="btn btn-warning">Review Pending Jobs</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

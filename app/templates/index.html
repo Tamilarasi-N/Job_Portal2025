@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to Job Portal{% endblock %}
+
+{% block content %}
+<div class="p-5 mb-4 bg-light rounded-3">
+    <div class="container-fluid py-5">
+        <h1 class="display-5 fw-bold">Find Your Next Opportunity</h1>
+        <p class="col-md-8 fs-4">Browse thousands of job listings from top companies or post your job openings to find the perfect candidates.</p>
+        <a href="{{ url_for('jobs.job_list') }}" class="btn btn-primary btn-lg" type="button">Find Jobs</a>
+
+        {# --- V V V --- MODIFIED "POST A JOB" BUTTON LOGIC --- V V V --- #}
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            {# Admin clicks this button - link to dedicated route #}
+            <a href="{{ url_for('auth.admin_cannot_post') }}" class="btn btn-secondary btn-lg ms-2" type="button">Post a Job</a>
+        {% elif not current_user.is_authenticated or current_user.role != 'employer' %}
+            {# Not logged in or Job Seeker clicks - link to register #}
+            <a href="{{ url_for('auth.register', role='employer') }}" class="btn btn-secondary btn-lg ms-2" type="button">Post a Job</a>
+        {% else %} {# Logged in as Employer clicks - link to post form #}
+            <a href="{{ url_for('employers.post_job') }}" class="btn btn-secondary btn-lg ms-2" type="button">Post a Job</a>
+        {% endif %}
+        {# --- ^ ^ ^ --- END OF MODIFIED LOGIC --- ^ ^ ^ --- #}
+
+    </div>
+</div>
+
+<div class="row align-items-md-stretch">
+    <div class="col-md-6">
+        <div class="h-100 p-5 text-white bg-dark rounded-3">
+            <h2>For Job Seekers</h2>
+            <p>Register today to create your profile, search for jobs by location, category, or company, and apply directly to openings that match your skills.</p>
+             {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.register', role='job_seeker') }}" class="btn btn-outline-light" type="button">Register Now</a>
+             {% elif current_user.role == 'job_seeker' %}
+                 <a href="{{ url_for('jobs.job_list') }}" class="btn btn-outline-light" type="button">Search Jobs</a>
+             {# Optionally show Search Jobs for Admin/Employer too, or nothing #}
+             {% elif current_user.role in ['employer', 'admin'] %}
+                 <a href="{{ url_for('jobs.job_list') }}" class="btn btn-outline-light" type="button">Search Jobs</a>
+             {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="h-100 p-5 bg-light border rounded-3">
+            <h2>For Employers</h2>
+            <p>Sign up to post job listings, manage your company profile, review applications, and connect with qualified candidates effortlessly.</p>
+
+            {# --- V V V --- MODIFIED "REGISTER AS EMPLOYER" BUTTON LOGIC --- V V V --- #}
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                {# Admin clicks this button - link to different dedicated route #}
+                <a href="{{ url_for('auth.admin_cannot_register') }}" class="btn btn-outline-secondary" type="button">Register as Employer</a>
+            {% elif not current_user.is_authenticated or current_user.role != 'employer' %}
+                {# Not logged in or Job Seeker clicks - link to register #}
+                <a href="{{ url_for('auth.register', role='employer') }}" class="btn btn-outline-secondary" type="button">Register as Employer</a>
+            {% else %} {# Logged in as Employer clicks - link to dashboard #}
+                 <a href="{{ url_for('employers.dashboard') }}" class="btn btn-outline-secondary" type="button">Go to Dashboard</a>
+            {% endif %}
+            {# --- ^ ^ ^ --- END OF MODIFIED LOGIC --- ^ ^ ^ --- #}
+
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<h2>Recent Job Postings</h2>
+{% if jobs %}
+<div class="list-group">
+    {% for job in jobs %}
+    <a href="{{ url_for('jobs.job_detail', job_id=job.id) }}" class="list-group-item list-group-item-action">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">{{ job.title }}</h5>
+            <small class="text-muted">{{ job.posted_at.strftime('%Y-%m-%d') }}</small>
+        </div>
+        <p class="mb-1">{{ job.company_name }} - {{ job.location }}</p>
+        {# Show snippet - ensure job.description is not None #}
+        <small class="text-muted">{{ (job.description[:100] + '...') if job.description else 'No description.' }}</small>
+    </a>
+    {% endfor %}
+</div>
+<div class="text-center mt-3">
+    <a href="{{ url_for('jobs.job_list') }}" class="btn btn-outline-primary">View All Jobs</a>
+</div>
+{% else %}
+<p>No recent jobs posted yet.</p>
+{% endif %}
+
+{% endblock %}
