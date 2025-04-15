@@ -8,3 +8,5 @@ Werkzeug>=2.0  # Provides password hashing
 email-validator>=1.1 # Required by Flask-WTF's Email validator
 python-dotenv>=0.19 # To load environment variables from .env file
 itsdangerous>=2.0 # For generating secure tokens
+psycopg2-binary
+gunicorn
