@@ -85,8 +85,9 @@ class Application(db.Model):
     notice_period_days = db.Column(db.Integer, nullable=True)
     earliest_join_date = db.Column(db.Date, nullable=True) # Use Date type
 
-    # --- Updated field for Cloudinary ---
+    # --- V V V --- Field for Cloudinary ID --- V V V ---
     resume_public_id = db.Column(db.String(255), nullable=True) # Store Cloudinary Public ID
+    # --- ^ ^ ^ --- End Field --- ^ ^ ^ ---
 
     # --- Fields for Workflow ---
     # Possible Statuses: Submitted, Viewed, Shortlisted, Interviewing, Offer Made, Hired, Offer Declined, Rejected

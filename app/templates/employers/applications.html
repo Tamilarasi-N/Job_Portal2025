@@ -20,10 +20,11 @@
                 <th scope="col">Join Date</th>
                 <th scope="col">Resume</th>
                 <th scope="col">Status</th>
-                <th scope="col" style="min-width: 250px;">Actions</th> {# Increased width for more buttons #}
+                <th scope="col" style="min-width: 250px;">Actions</th>
             </tr>
         </thead>
         <tbody>
+             {# Loop through application objects from pagination #}
              {% for app_obj in applications.items %}
              <tr>
                 {# Applicant Info #}
@@ -39,16 +40,19 @@
                 <td>{{ app_obj.expected_ctc if app_obj.expected_ctc else '-' }}</td>
                 <td>{{ app_obj.notice_period_days if app_obj.notice_period_days is not none else '-' }}</td>
                 <td>{{ app_obj.earliest_join_date.strftime('%Y-%m-%d') if app_obj.earliest_join_date else '-' }}</td>
-                {# Resume Download Link #}
+                {# --- V V V --- Resume Column using Cloudinary --- V V V --- #}
                 <td>
-                    {% if app_obj.resume_filename %}
-                        <a href="{{ url_for('employers.download_resume', filename=app_obj.resume_filename) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Download Resume">
-                            <i class="bi bi-download"></i> <span class="d-none d-md-inline">Download</span>
+                    {# Use the context processor helper function to get the URL #}
+                    {% set resume_url = get_cloudinary_raw_url(app_obj.resume_public_id) %}
+                    {% if resume_url %}
+                        <a href="{{ resume_url }}" class="btn btn-sm btn-outline-primary" target="_blank" title="View Resume">
+                            <i class="bi bi-file-earmark-pdf"></i> <span class="d-none d-md-inline">View Resume</span>
                         </a>
                     {% else %}
-                        <span class="text-muted">Not Provided</span>
+                         <span class="text-muted">Not Provided</span> {# Shows if ID is null or URL fails #}
                     {% endif %}
                 </td>
+                 {# --- ^ ^ ^ --- End Resume Column --- ^ ^ ^ --- #}
                 {# Status Column #}
                 <td>
                    {% if app_obj.status == 'Submitted' %} <span class="badge bg-primary">Submitted</span>
@@ -61,10 +65,10 @@
                    {% elif app_obj.status == 'Rejected' %}
                        <span class="badge bg-danger">Rejected</span>
                        {% if app_obj.rejection_reason %}<small class="d-block text-muted fst-italic" style="font-size: 0.8em; margin-top: 2px;">{{ app_obj.rejection_reason }}</small>{% endif %}
-                   {% else %} <span class="badge bg-light text-dark">{{ app_obj.status }}</span> {# Fallback #}
+                   {% else %} <span class="badge bg-light text-dark">{{ app_obj.status }}</span>
                    {% endif %}
                 </td>
-                {# --- V V V --- ACTIONS COLUMN - UPDATED --- V V V --- #}
+                {# Actions Column - with Dynamic Buttons #}
                 <td>
                     {# Actions depend on the current status #}
                     {% if app_obj.status == 'Submitted' %}
@@ -89,67 +93,29 @@
                         </button>
 
                     {% elif app_obj.status == 'Viewed' %}
-                         {# Shortlist Action #}
-                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Shortlisted">
-                            <button type="submit" class="btn btn-sm btn-outline-info" title="Shortlist"><i class="bi bi-star"></i></button>
-                        </form>
-                         {# Interview Action #}
-                        <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Interviewing">
-                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as Interviewing"><i class="bi bi-calendar-event"></i></button>
-                        </form>
-                         {# Reject Action (Modal Trigger) #}
-                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ app_obj.id }}" title="Reject Application">
-                            <i class="bi bi-x-octagon"></i>
-                        </button>
+                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Shortlisted"><button type="submit" class="btn btn-sm btn-outline-info" title="Shortlist"><i class="bi bi-star"></i></button></form>
+                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Interviewing"><button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as Interviewing"><i class="bi bi-calendar-event"></i></button></form>
+                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ app_obj.id }}" title="Reject Application"><i class="bi bi-x-octagon"></i></button>
 
                     {% elif app_obj.status == 'Shortlisted' %}
-                         {# Interview Action #}
-                        <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Interviewing">
-                            <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as Interviewing"><i class="bi bi-calendar-event"></i></button>
-                        </form>
-                         {# Make Offer Action #}
-                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Offer Made">
-                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Make Offer"><i class="bi bi-file-earmark-text"></i></button>
-                        </form>
-                         {# Reject Action (Modal Trigger) #}
-                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ app_obj.id }}" title="Reject Application">
-                            <i class="bi bi-x-octagon"></i>
-                        </button>
+                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Interviewing"><button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as Interviewing"><i class="bi bi-calendar-event"></i></button></form>
+                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Offer Made"><button type="submit" class="btn btn-sm btn-outline-primary" title="Make Offer"><i class="bi bi-file-earmark-text"></i></button></form>
+                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ app_obj.id }}" title="Reject Application"><i class="bi bi-x-octagon"></i></button>
 
                     {% elif app_obj.status == 'Interviewing' %}
-                         {# Make Offer Action #}
-                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Offer Made">
-                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Make Offer"><i class="bi bi-file-earmark-text"></i></button>
-                        </form>
-                         {# Reject Action (Modal Trigger) #}
-                        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ app_obj.id }}" title="Reject Application">
-                            <i class="bi bi-x-octagon"></i>
-                        </button>
+                         <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Offer Made"><button type="submit" class="btn btn-sm btn-outline-primary" title="Make Offer"><i class="bi bi-file-earmark-text"></i></button></form>
+                         <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectModal-{{ app_obj.id }}" title="Reject Application"><i class="bi bi-x-octagon"></i></button>
 
                     {% elif app_obj.status == 'Offer Made' %}
-                        {# Mark Hired Action #}
-                        <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Hired">
-                            <button type="submit" class="btn btn-sm btn-success" title="Mark as Hired"><i class="bi bi-check-circle"></i> Hired</button>
-                        </form>
-                        {# Mark Offer Declined Action #}
-                        <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1">
-                            <input type="hidden" name="new_status" value="Offer Declined">
-                            <button type="submit" class="btn btn-sm btn-secondary" title="Mark Offer as Declined by Candidate"><i class="bi bi-slash-circle"></i> Declined</button>
-                        </form>
+                        <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Hired"><button type="submit" class="btn btn-sm btn-success" title="Mark as Hired"><i class="bi bi-check-circle"></i> Hired</button></form>
+                        <form action="{{ url_for('employers.update_application_status', application_id=app_obj.id) }}" method="POST" class="d-inline me-1"> <input type="hidden" name="new_status" value="Offer Declined"><button type="submit" class="btn btn-sm btn-secondary" title="Mark Offer as Declined by Candidate"><i class="bi bi-slash-circle"></i> Declined</button></form>
 
                     {% else %} {# Hired, Offer Declined, Rejected #}
-                        <span class="text-muted">-</span> {# No further actions #}
+                        <span class="text-muted">-</span>
                     {% endif %}
                 </td>
-                {# --- ^ ^ ^ --- END ACTIONS COLUMN --- ^ ^ ^ --- #}
             </tr>
-            {% endfor %} {# End of loop through applications #}
+            {% endfor %} {# End loop #}
         </tbody>
     </table>
 </div>
@@ -162,7 +128,7 @@
  </ul>
 </nav>
 
-{% else %} {# If no applications exist #}
+{% else %} {# If no applications #}
 <div class="alert alert-info mt-3" role="alert">
     No applications have been received for this job posting yet.
 </div>
@@ -172,8 +138,8 @@
     <a href="{{ url_for('employers.dashboard') }}" class="btn btn-secondary">&laquo; Back to Dashboard</a>
 </div>
 
-{# Rejection Modals (One per application where status allows rejection - unchanged) #}
-{% if applications and applications.items %}
+{# Rejection Modals (Render only if needed) #}
+{% if applications and applications.items and reject_form %}
     {% for app_obj in applications.items %}
         {# Render reject modal only if application can be rejected #}
         {% if app_obj.status in ['Submitted', 'Viewed', 'Shortlisted', 'Interviewing'] %}
@@ -185,7 +151,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form action="{{ url_for('employers.reject_application', application_id=app_obj.id) }}" method="POST" novalidate>
-                        {# Pass reject_form from view context #}
                         {{ reject_form.hidden_tag() }}
                         <div class="modal-body">
                             <p>Select a reason for rejecting this application. An email will be sent.</p>
@@ -208,9 +173,9 @@
                 </div>
             </div>
         </div>
-        {% endif %}
-    {% endfor %}
-{% endif %}
+        {% endif %} {# End if status allows rejection #}
+    {% endfor %} {# End loop for modals #}
+{% endif %} {# End check for applications.items for modals #}
 
 {% endblock %} {# End block content #}
 

@@ -8,8 +8,8 @@ Werkzeug>=2.0
 email-validator>=1.1
 python-dotenv>=0.19
 itsdangerous>=2.0
-psycopg2-binary # For PostgreSQL on Render
-gunicorn        # WSGI server for Render
-uuid            # Built-in, but good to note dependency if explicit import used
-whitenoise[brotli]
-cloudinary
+#psycopg2-binary # Use version 2 binary for better Windows compatibility usually
+gunicorn        # For deployment (Render needs this)
+# whitenoise[brotli] # Commented out as Cloudinary handles files, keep if needed for CSS/JS
+cloudinary      # For resume uploads
+uuid            # Built-in usually, safe to list if explicitly imported

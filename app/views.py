@@ -2,8 +2,8 @@
 
 import os
 import uuid
-from functools import wraps # Ensure wraps is imported
-from datetime import datetime # Ensure datetime is imported
+from functools import wraps
+from datetime import datetime
 from flask import (
     render_template, redirect, url_for, flash, request, Blueprint, current_app, abort, send_from_directory
 )
@@ -12,11 +12,9 @@ from flask_mail import Message
 from itsdangerous import SignatureExpired, BadSignature
 from werkzeug.utils import secure_filename
 from sqlalchemy.orm import joinedload
-# --- V V V --- Cloudinary Import --- V V V ---
+# Import Cloudinary specific modules
 import cloudinary
 import cloudinary.uploader
-# --- ^ ^ ^ --- End Cloudinary Import --- ^ ^ ^ ---
-
 
 from . import db, mail, serializer
 from .models import User, Job, Application
@@ -33,7 +31,7 @@ employers_bp = Blueprint('employers', __name__)
 admin_bp = Blueprint('admin', __name__)
 
 
-# --- Decorators for Role Checks (RE-VERIFIED SYNTAX & INDENTATION) ---
+# --- Decorators for Role Checks (VERIFIED SYNTAX & INDENTATION) ---
 def employer_required(f):
     @wraps(f)
     @login_required
@@ -63,7 +61,7 @@ def job_seeker_required(f):
             return redirect(request.referrer or url_for('main.index'))
         return f(*args, **kwargs)
     return decorated_function
-# --- End of Corrected Decorators ---
+# --- End of Decorators ---
 
 
 # --- Helper Function for Sending Emails ---
@@ -298,18 +296,27 @@ def apply_job(job_id):
         try:
             cld_folder = f"job_portal/resumes/{job.id}"
             unique_id = uuid.uuid4().hex[:12]
+            # Define the desired public ID (folder structure + unique name)
             cld_public_id = f"{cld_folder}/{unique_id}_{filename}"
 
             current_app.logger.info(f"Attempting to upload resume to Cloudinary with public_id: {cld_public_id}")
+            # Upload using the file stream, ONLY providing public_id
             upload_result = cloudinary.uploader.upload(
-                f, public_id=cld_public_id, folder=cld_folder, resource_type="raw"
+                f,
+                public_id=cld_public_id, # Set the desired ID including folder
+                resource_type="raw"     # Treat as generic file
             )
 
+            # Verify upload and get the confirmed public ID
             if upload_result and upload_result.get('public_id'):
                 cloudinary_public_id = upload_result.get('public_id')
-                current_app.logger.info(f"Resume uploaded successfully to Cloudinary: {cloudinary_public_id}")
+                # Log the *actual* ID returned, it should match cld_public_id if successful
+                current_app.logger.info(f"Resume uploaded successfully. Returned public_id: {cloudinary_public_id}")
+                # Optional sanity check:
+                # if cloudinary_public_id != cld_public_id:
+                #    current_app.logger.warning(f"Cloudinary returned slightly different public_id: {cloudinary_public_id}")
             else:
-                raise Exception(f"Cloudinary upload failed. Result: {upload_result}")
+                raise Exception(f"Cloudinary upload failed or did not return public_id. Result: {upload_result}")
 
         except Exception as e:
             current_app.logger.error(f"Cloudinary upload error for user {current_user.id}, job {job_id}: {e}")
@@ -321,14 +328,14 @@ def apply_job(job_id):
             job_id=job.id, job_seeker_id=current_user.id, current_ctc=form.current_ctc.data,
             expected_ctc=form.expected_ctc.data, notice_period_days=form.notice_period_days.data,
             earliest_join_date=form.earliest_join_date.data,
-            resume_public_id=cloudinary_public_id, # Save Cloudinary ID
+            resume_public_id=cloudinary_public_id, # Use renamed field
             status='Submitted'
         )
         db.session.add(app_record)
         try:
             db.session.commit()
             flash('Application submitted!', 'success')
-            current_app.logger.info(f"Application saved: user {current_user.id}, job {job_id}")
+            current_app.logger.info(f"Application saved: user {current_user.id}, job {job_id}, resume_id: {cloudinary_public_id}")
             now_time = datetime.utcnow()
 
             # Send Emails
@@ -336,7 +343,8 @@ def apply_job(job_id):
                 subj_seeker = f"Application Received: {job.title}"
                 job_url = url_for('jobs.job_detail', job_id=job.id, _external=True)
                 text_seeker = f"Hello {current_user.username},\n\nYour application for '{job.title}' at {job.company_name} was submitted on {now_time.strftime('%Y-%m-%d %H:%M')} UTC.\nView job: {job_url}\n\nThanks,\nThe Job Portal Team"
-                html_seeker = render_template('jobs/email/application_confirmation.html', user=current_user, job=job, job_url=job_url, now=now_time)
+                html_seeker = render_template('jobs/email/application_confirmation.html',
+                                              user=current_user, job=job, job_url=job_url, now=now_time)
                 if send_email(subj_seeker, [current_user.email], text_seeker, html_seeker):
                     current_app.logger.info(f"App confirm email sent to {current_user.email}")
                 else:
@@ -351,7 +359,8 @@ def apply_job(job_id):
                     subj_emp = f"New Application: {job.title}"
                     apps_url = url_for('employers.view_applications', job_id=job.id, _external=True)
                     text_emp = f"New app for {job.title} from {current_user.username}.\nView: {apps_url}"
-                    html_emp = render_template('employers/email/new_application_notification.html', employer=emp, job=job, applicant=current_user, apps_url=apps_url, now=now_time)
+                    html_emp = render_template('employers/email/new_application_notification.html',
+                                               employer=emp, job=job, applicant=current_user, apps_url=apps_url, now=now_time)
                     if send_email(subj_emp, [emp.email], text_emp, html_emp):
                         current_app.logger.info(f"New app email sent to {emp.email}")
                     # else: No flash needed for user if employer email fails
@@ -364,8 +373,7 @@ def apply_job(job_id):
         except Exception as e:
             db.session.rollback()
             current_app.logger.error(f"App DB save error: {e}")
-            # Attempt to delete uploaded Cloudinary file if DB fails
-            if cloudinary_public_id:
+            if cloudinary_public_id: # Attempt to delete orphaned Cloudinary file
                 try:
                     cloudinary.uploader.destroy(cloudinary_public_id, resource_type="raw")
                     current_app.logger.warning(f"Deleted orphaned Cloudinary resume {cloudinary_public_id} after DB error.")
@@ -479,7 +487,7 @@ def view_applications(job_id):
     reject_form = RejectApplicationForm()
     return render_template('employers/applications.html', title=f'Applications for {job.title}', job=job, applications=applications, reject_form=reject_form)
 
-# download_resume route was removed as files are now on Cloudinary
+# download_resume route was removed
 
 @employers_bp.route('/applications/<int:application_id>/reject', methods=['POST'])
 @employer_required
